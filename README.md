@@ -1,4 +1,4 @@
-# 🎓 Convex Autograding System
+# 🐄 moo
 
 An enterprise-grade autograding system with Google Classroom integration, built on the Convex serverless platform.
 
@@ -24,7 +24,7 @@ An enterprise-grade autograding system with Google Classroom integration, built 
 
 ```bash
 git clone <your-repository-url>
-cd convex-autograding-system
+cd moo
 npm install
 ```
 

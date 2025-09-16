@@ -1,12 +1,12 @@
 {
-  "name": "convex-autograding-system",
+  "name": "moo",
   "version": "1.0.0",
-  "description": "Enterprise-grade autograding system with Google Classroom integration, built on Convex serverless platform",
+  "description": "moo - Enterprise-grade autograding system with Google Classroom integration, built on Convex serverless platform",
   "author": "Your Name",
-  "keywords": ["autograding", "education", "convex", "google-classroom", "grading", "ai-grading"],
+  "keywords": ["autograding", "education", "convex", "google-classroom", "grading", "ai-grading", "moo"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/convex-autograding-system"
+    "url": "https://github.com/yourusername/moo"
   },
   "license": "MIT",
   "scripts": {

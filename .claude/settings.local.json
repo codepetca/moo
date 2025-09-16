@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.convex.dev)",
+      "WebSearch",
+      "WebFetch(domain:developers.google.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

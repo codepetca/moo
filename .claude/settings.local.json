@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:docs.convex.dev)",
       "WebSearch",
-      "WebFetch(domain:developers.google.com)"
+      "WebFetch(domain:developers.google.com)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

@@ -7,7 +7,7 @@ This folder contains Google Apps Script code to interact with your Convex chat b
 1. **Create a new Apps Script project:**
    - Go to [script.google.com](https://script.google.com)
    - Click "New Project"
-   - Give it a name like "Convex Chat Tester"
+   - Give it a name like "moo Autograding Integration"
 
 2. **Copy the code:**
    - Replace the default `Code.gs` content with the code from `Code.gs` in this folder

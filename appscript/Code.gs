@@ -1,5 +1,5 @@
 /**
- * Google Apps Script functions for interacting with Convex Chat Backend
+ * Google Apps Script functions for interacting with moo Autograding Backend
  *
  * Setup Instructions:
  * 1. Go to script.google.com

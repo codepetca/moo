@@ -13,7 +13,17 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/convex/*": ["./convex/*"],
+      "@/components/*": ["./src/shared/components/*"],
+      "@/hooks/*": ["./src/shared/hooks/*"],
+      "@/utils/*": ["./src/shared/utils/*"],
+      "@/schemas/*": ["./src/server/schemas/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["./src", "./convex", "vite.config.mts"]
+  "include": ["./src", "./convex", "vite.config.mts", ".storybook"]
 }

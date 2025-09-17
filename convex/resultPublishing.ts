@@ -151,10 +151,31 @@ export const prepareResultsForPublication = query({
       throw new Error("Assignment not found");
     }
 
-    const publicationConfig = assignment.publicationConfig as PublicationConfig;
-    if (!publicationConfig) {
+    if (!assignment.publicationConfig) {
       throw new Error("No publication configuration found");
     }
+
+    // Ensure the publication config has required fields with defaults
+    const storedConfig = assignment.publicationConfig as any;
+    const publicationConfig: PublicationConfig = {
+      assignmentId: args.assignmentId,
+      publishMode: storedConfig.publishMode || "manual",
+      includeDetailedFeedback: storedConfig.includeDetailedFeedback || false,
+      includeGradingRubric: storedConfig.includeGradingRubric || false,
+      notificationSettings: storedConfig.notificationSettings || {
+        emailStudents: true,
+        emailInstructors: false,
+        classroomNotification: true
+      },
+      privacySettings: storedConfig.privacySettings || {
+        showIndividualScores: true,
+        showClassStatistics: false,
+        showPeerComparisons: false,
+        anonymizeResults: false
+      },
+      scheduledDate: storedConfig.scheduledDate,
+      ...storedConfig
+    };
 
     // Get all submissions
     const submissions = await ctx.db
@@ -276,7 +297,7 @@ export const prepareResultsForPublication = query({
 /**
  * Publish results to students
  */
-export const publishResults = action({
+export const publishResults: any = action({
   args: {
     assignmentId: v.id("assignments"),
     testMode: v.optional(v.boolean())
@@ -285,7 +306,7 @@ export const publishResults = action({
     const startTime = Date.now();
 
     // Get prepared results
-    const resultsData = await ctx.runQuery(api.resultPublishing.prepareResultsForPublication, {
+    const resultsData: any = await ctx.runQuery(api.resultPublishing.prepareResultsForPublication, {
       assignmentId: args.assignmentId
     });
 
@@ -416,7 +437,12 @@ export const updatePublicationStatus = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.assignmentId, {
-      publicationStatus: args.status
+      publicationStatus: {
+        ...args.status,
+        published: args.status.status === "published",
+        publishedAt: args.status.status === "published" ? Date.now() : undefined,
+        publishedBy: args.status.status === "published" ? "system" : undefined
+      }
     });
 
     return args.status;

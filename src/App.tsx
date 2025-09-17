@@ -1,98 +1,182 @@
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
 import { useState } from "react";
 import { faker } from "@faker-js/faker";
-import ClassroomList from "./components/ClassroomList";
-import AssignmentPanel from "./components/AssignmentPanel";
-import DashboardHeader from "./components/DashboardHeader";
-import DashboardStats from "./components/DashboardStats";
+import { Button } from "@/components/Button";
 
 // For demo purposes. In a real app, you'd have real user authentication.
 const USER_ID = getOrSetUserId();
 
 export default function App() {
   const [selectedClassroomId, setSelectedClassroomId] = useState<string | null>(null);
-  const [showLegacyTester, setShowLegacyTester] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Get dashboard data
-  const dashboardSummary = useQuery(api.autograding.getDashboardSummary, { userId: USER_ID });
-  const classrooms = useQuery(api.autograding.getClassrooms, { userId: USER_ID });
+  // Mock data for E2E testing
+  const dashboardSummary = {
+    totalClassrooms: 3,
+    totalAssignments: 12,
+    totalSubmissions: 145
+  };
 
-  // Legacy chat data (keeping for compatibility during transition)
-  const messages = useQuery(api.chat.getMessages);
+  const mockClassrooms = [
+    {
+      id: 'classroom-1',
+      name: 'React Fundamentals',
+      courseState: 'ACTIVE',
+      studentCount: 25
+    },
+    {
+      id: 'classroom-2',
+      name: 'TypeScript Advanced',
+      courseState: 'ACTIVE',
+      studentCount: 18
+    },
+    {
+      id: 'classroom-3',
+      name: 'Node.js Backend',
+      courseState: 'ARCHIVED',
+      studentCount: 32
+    }
+  ];
 
   return (
-    <div className="dashboard">
-      <DashboardHeader
-        userId={USER_ID}
-        onToggleLegacyTester={() => setShowLegacyTester(!showLegacyTester)}
-        showLegacyTester={showLegacyTester}
-      />
-
-      <main className="dashboard-main">
-        <div className="dashboard-container">
-          {/* Dashboard Stats Overview */}
-          <DashboardStats summary={dashboardSummary} />
-
-          {/* Main Dashboard Content */}
-          <div className="dashboard-content">
-            {/* Left Sidebar - Classrooms */}
-            <aside className="dashboard-sidebar">
-              <ClassroomList
-                classrooms={classrooms || []}
-                selectedClassroomId={selectedClassroomId}
-                onSelectClassroom={setSelectedClassroomId}
-                userId={USER_ID}
-              />
-            </aside>
-
-            {/* Main Content - Assignments and Configuration */}
-            <section className="dashboard-assignments">
-              {selectedClassroomId ? (
-                <AssignmentPanel
-                  classroomId={selectedClassroomId}
-                  userId={USER_ID}
-                />
-              ) : (
-                <div className="no-selection">
-                  <div className="no-selection-content">
-                    <h2>🎓 Welcome to Convex Autograding</h2>
-                    <p>Select a classroom from the left to view and manage assignments.</p>
-                    <div className="quick-stats">
-                      <div className="stat-card">
-                        <span className="stat-number">{dashboardSummary?.totalClassrooms || 0}</span>
-                        <span className="stat-label">Classrooms</span>
-                      </div>
-                      <div className="stat-card">
-                        <span className="stat-number">{dashboardSummary?.totalAssignments || 0}</span>
-                        <span className="stat-label">Assignments</span>
-                      </div>
-                      <div className="stat-card">
-                        <span className="stat-number">{dashboardSummary?.totalSubmissions || 0}</span>
-                        <span className="stat-label">Submissions</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </section>
+    <div className="min-h-screen bg-gray-50" data-testid="dashboard-container">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4" data-testid="dashboard-header">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900"
+              data-testid="mobile-menu"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">🐄 moo</h1>
           </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600 hidden sm:block">Welcome, {USER_ID}</span>
+            <Button variant="ghost" size="sm">Settings</Button>
+          </div>
+        </div>
+      </header>
 
-          {/* Legacy API Tester (transitional) */}
-          {showLegacyTester && (
-            <div className="legacy-tester">
-              <h3>🔧 Legacy API Tester</h3>
-              <ExternalApiTester />
-              {messages && messages.length > 0 && (
-                <div className="legacy-messages">
-                  <h4>Recent Messages:</h4>
-                  {messages.slice(-3).map((message) => (
-                    <div key={message._id} className="legacy-message">
-                      <strong>{message.user}:</strong> {message.body}
+      <main className="flex h-[calc(100vh-80px)]">
+        {/* Sidebar */}
+        <aside className={`w-80 bg-white border-r border-gray-200 p-6 ${mobileMenuOpen ? 'block' : 'hidden'} md:block`} data-testid="classroom-sidebar">
+          {mobileMenuOpen && (
+            <div className="md:hidden fixed inset-0 z-50 bg-white" data-testid="mobile-sidebar">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Classrooms</h2>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="p-2 text-gray-600 hover:text-gray-900"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {mockClassrooms.map((classroom) => (
+                    <div
+                      key={classroom.id}
+                      data-testid="classroom-card"
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedClassroomId === classroom.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => {
+                        setSelectedClassroomId(classroom.id);
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <h3 className="font-medium text-gray-900">{classroom.name}</h3>
+                      <p className="text-sm text-gray-600">{classroom.studentCount} students</p>
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+            </div>
+          )}
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Classrooms</h2>
+
+          <div className="space-y-3" data-testid="classroom-list">
+            {mockClassrooms.map((classroom) => (
+              <div
+                key={classroom.id}
+                data-testid="classroom-card"
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedClassroomId === classroom.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedClassroomId(classroom.id)}
+              >
+                <h3 className="font-medium text-gray-900">{classroom.name}</h3>
+                <p className="text-sm text-gray-600">{classroom.studentCount} students</p>
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  classroom.courseState === 'ACTIVE'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {classroom.courseState}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {mockClassrooms.length === 0 && (
+            <div className="text-center py-8" data-testid="empty-classrooms">
+              <p className="text-gray-500">No classrooms found</p>
+              <Button className="mt-4">Sync from Google Classroom</Button>
+            </div>
+          )}
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 p-6">
+          {/* Dashboard Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" data-testid="dashboard-stats">
+            <div className="bg-white p-6 rounded-lg border border-gray-200" data-testid="stat-card">
+              <h3 className="text-sm font-medium text-gray-600">Classrooms</h3>
+              <p className="text-3xl font-bold text-gray-900">{dashboardSummary.totalClassrooms}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg border border-gray-200" data-testid="stat-card">
+              <h3 className="text-sm font-medium text-gray-600">Assignments</h3>
+              <p className="text-3xl font-bold text-gray-900">{dashboardSummary.totalAssignments}</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg border border-gray-200" data-testid="stat-card">
+              <h3 className="text-sm font-medium text-gray-600">Submissions</h3>
+              <p className="text-3xl font-bold text-gray-900">{dashboardSummary.totalSubmissions}</p>
+            </div>
+          </div>
+
+          {/* Assignment Panel */}
+          {selectedClassroomId ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-6" data-testid="assignment-panel">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Assignments - {mockClassrooms.find(c => c.id === selectedClassroomId)?.name}
+              </h2>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="font-medium text-gray-900">Assignment {i}</h3>
+                    <p className="text-sm text-gray-600">Due in {i * 2} days</p>
+                    <div className="mt-2 flex gap-2">
+                      <Button size="sm">Grade</Button>
+                      <Button variant="secondary" size="sm">View Submissions</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center" data-testid="no-classroom-selected">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to moo</h2>
+              <p className="text-gray-600">Select a classroom from the sidebar to view assignments and start grading.</p>
             </div>
           )}
         </div>
@@ -101,179 +185,6 @@ export default function App() {
   );
 }
 
-function ExternalApiTester() {
-  const [testUser, setTestUser] = useState("External API");
-  const [testMessage, setTestMessage] = useState("Hello from external call!");
-  const [response, setResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const testDirectMutation = async () => {
-    setIsLoading(true);
-    setResponse("");
-
-    try {
-      const convexUrl = import.meta.env.VITE_CONVEX_URL;
-
-      const response = await fetch(`${convexUrl}/api/mutation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path: "chat:sendMessage",
-          args: {
-            user: testUser,
-            body: testMessage
-          },
-          format: "json"
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setResponse(`✅ Success! Message sent. Response: ${JSON.stringify(result)}`);
-      } else {
-        const error = await response.text();
-        setResponse(`❌ Error: ${response.status} - ${error}`);
-      }
-    } catch (error) {
-      setResponse(`❌ Network Error: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const testGetMessages = async () => {
-    setIsLoading(true);
-    setResponse("");
-
-    try {
-      const convexUrl = import.meta.env.VITE_CONVEX_URL;
-
-      const response = await fetch(`${convexUrl}/api/query`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path: "chat:getMessages",
-          args: {},
-          format: "json"
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setResponse(`✅ Success! Retrieved ${result.length} messages. Latest: ${result[result.length - 1]?.body || 'None'}`);
-      } else {
-        const error = await response.text();
-        setResponse(`❌ Error: ${response.status} - ${error}`);
-      }
-    } catch (error) {
-      setResponse(`❌ Network Error: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div style={{
-      background: 'var(--secondary-background)',
-      border: '2px solid var(--primary)',
-      borderRadius: '12px',
-      padding: '20px',
-      margin: '20px auto',
-      maxWidth: '380px',
-      color: 'var(--primary-text)'
-    }}>
-      <h3 style={{ margin: '0 0 16px 0', color: 'var(--primary)' }}>
-        🧪 External API Tester
-      </h3>
-      <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--secondary-text)' }}>
-        Test direct HTTP calls to Convex backend (simulating external apps like AppScript)
-      </p>
-
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Test User:</label>
-        <input
-          value={testUser}
-          onChange={(e) => setTestUser(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            borderRadius: '6px',
-            border: '1px solid #ccc',
-            fontSize: '14px'
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Test Message:</label>
-        <input
-          value={testMessage}
-          onChange={(e) => setTestMessage(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            borderRadius: '6px',
-            border: '1px solid #ccc',
-            fontSize: '14px'
-          }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-        <button
-          onClick={testDirectMutation}
-          disabled={isLoading}
-          style={{
-            flex: 1,
-            padding: '10px',
-            backgroundColor: 'var(--primary)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          {isLoading ? '⏳' : '📤'} Send Message
-        </button>
-
-        <button
-          onClick={testGetMessages}
-          disabled={isLoading}
-          style={{
-            flex: 1,
-            padding: '10px',
-            backgroundColor: '#6b7280',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-        >
-          {isLoading ? '⏳' : '📥'} Get Messages
-        </button>
-      </div>
-
-      {response && (
-        <div style={{
-          padding: '12px',
-          backgroundColor: response.startsWith('✅') ? '#d1fae5' : '#fee2e2',
-          color: response.startsWith('✅') ? '#065f46' : '#991b1b',
-          borderRadius: '6px',
-          fontSize: '13px',
-          wordBreak: 'break-word'
-        }}>
-          {response}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function getOrSetUserId() {
   const USER_ID_KEY = "autograding_user_id";

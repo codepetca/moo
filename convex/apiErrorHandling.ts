@@ -133,7 +133,7 @@ export function classifyApiError(error: any, apiService: ApiError['apiService'])
  * Google Classroom API error classification
  */
 function classifyGoogleClassroomError(error: any, base: ApiError): ApiError {
-  const status = base.httpStatus;
+  const status = base.httpStatus ?? 0;
   const message = error?.message?.toLowerCase() || "";
 
   if (status === 401 || message.includes("unauthorized")) {
@@ -286,7 +286,7 @@ function classifyAiServiceError(error: any, base: ApiError): ApiError {
  * Generic HTTP error classification
  */
 function classifyHttpError(error: any, base: ApiError): ApiError {
-  const status = base.httpStatus;
+  const status = base.httpStatus ?? 0;
 
   if (!status) {
     // Network errors without status codes

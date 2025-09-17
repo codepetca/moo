@@ -1,6 +1,7 @@
 import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 
 // ============================================
 // GOOGLE CLASSROOM INTEGRATION & SYNC
@@ -55,6 +56,7 @@ export const configureGradeSync = mutation({
       maxPoints: v.number(),
       dueDate: v.optional(v.string()),
       syncMode: v.union(v.literal("immediate"), v.literal("batch"), v.literal("manual")),
+      syncGrades: v.boolean(),
       notifyStudents: v.boolean(),
       includeComments: v.boolean()
     })
@@ -147,7 +149,7 @@ export const prepareGradesForSync = query({
 
         const gradeEntry: ClassroomGradeEntry = {
           userId: submission.studentId,
-          assignedGrade: hasGrade ? assignedGrade : undefined,
+          assignedGrade: hasGrade ? (assignedGrade ?? 0) : 0,
           courseWorkId: classroomConfig.courseWorkId,
           draftGrade: hasGrade ? undefined : assignedGrade,
           comment: comment || undefined
@@ -408,6 +410,21 @@ export const checkSubmissionSyncStatus = query({
 });
 
 /**
+ * Helper query to get submissions by assignment for actions
+ */
+export const getSubmissionsByAssignment = query({
+  args: {
+    assignmentId: v.id("assignments")
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("submissions")
+      .withIndex("by_assignment", (q: any) => q.eq("assignmentId", args.assignmentId))
+      .collect();
+  }
+});
+
+/**
  * Retry failed sync operations
  */
 export const retryFailedSync = action({
@@ -416,13 +433,12 @@ export const retryFailedSync = action({
     studentIds: v.optional(v.array(v.string()))
   },
   handler: async (ctx, args) => {
-    // Get submissions that need retry
-    const submissions = await ctx.db
-      .query("submissions")
-      .withIndex("by_assignment", (q) => q.eq("assignmentId", args.assignmentId))
-      .collect();
+    // Get submissions that need retry via query since actions can't use ctx.db directly
+    const submissions = await ctx.runQuery(api.classroomSync.getSubmissionsByAssignment, {
+      assignmentId: args.assignmentId
+    }) || [];
 
-    const failedSubmissions = submissions.filter(sub => {
+    const failedSubmissions = submissions.filter((sub: Doc<"submissions">) => {
       if (args.studentIds && !args.studentIds.includes(sub.studentId)) {
         return false;
       }
@@ -440,7 +456,7 @@ export const retryFailedSync = action({
     }
 
     // Retry sync for failed submissions
-    const result = await ctx.runAction(api.classroomSync.syncGradesToClassroom, {
+    const result: any = await ctx.runAction(api.classroomSync.syncGradesToClassroom, {
       assignmentId: args.assignmentId,
       forceSync: true
     });
@@ -448,8 +464,8 @@ export const retryFailedSync = action({
     return {
       success: result.success,
       message: `Retry completed: ${result.stats.successful} successful, ${result.stats.failed} failed`,
-      retryResults: result.syncResults.filter(r =>
-        failedSubmissions.some(sub => sub.studentId === r.studentId)
+      retryResults: result.syncResults?.filter((r: any) =>
+        failedSubmissions.some((sub: Doc<"submissions">) => sub.studentId === r.studentId)
       )
     };
   }

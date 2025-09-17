@@ -74,7 +74,7 @@ class AutoGradingEngine {
     let incorrectSelections = 0;
 
     // Count correct matches
-    for (const answer of studentSet) {
+    for (const answer of Array.from(studentSet)) {
       if (correctSet.has(answer)) {
         correctMatches++;
       } else {

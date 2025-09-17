@@ -9,8 +9,8 @@ export default function DashboardHeader({ userId, onToggleLegacyTester, showLega
     <header className="dashboard-header">
       <div className="header-content">
         <div className="header-left">
-          <h1>🎓 Convex Autograding</h1>
-          <p>Automated grading for Google Classroom assignments</p>
+          <h1>🐄 moo</h1>
+          <p>Enterprise autograding with Google Classroom integration</p>
         </div>
 
         <div className="header-right">

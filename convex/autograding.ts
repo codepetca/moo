@@ -22,7 +22,13 @@ export const saveClassroomData = mutation({
     description: v.optional(v.string()),
     alternateLink: v.optional(v.string()),
     teacherGroupEmail: v.optional(v.string()),
-    courseState: v.string(),
+    courseState: v.union(
+      v.literal("ACTIVE"),
+      v.literal("ARCHIVED"),
+      v.literal("PROVISIONED"),
+      v.literal("DECLINED"),
+      v.literal("SUSPENDED")
+    ),
     creationTime: v.optional(v.string()),
     updateTime: v.optional(v.string()),
     guardianInvitationsEnabled: v.optional(v.boolean()),
@@ -100,15 +106,30 @@ export const saveAssignmentData = mutation({
     formId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    state: v.string(),
+    state: v.union(
+      v.literal("PUBLISHED"),
+      v.literal("DRAFT"),
+      v.literal("DELETED")
+    ),
     alternateLink: v.optional(v.string()),
     creationTime: v.optional(v.string()),
     updateTime: v.optional(v.string()),
     dueDate: v.optional(v.string()),
     maxPoints: v.optional(v.number()),
-    workType: v.string(),
-    submissionModificationMode: v.optional(v.string()),
-    assigneeMode: v.optional(v.string()),
+    workType: v.union(
+      v.literal("ASSIGNMENT"),
+      v.literal("SHORT_ANSWER_QUESTION"),
+      v.literal("MULTIPLE_CHOICE_QUESTION")
+    ),
+    submissionModificationMode: v.optional(v.union(
+      v.literal("MODIFIABLE_UNTIL_TURNED_IN"),
+      v.literal("MODIFIABLE"),
+      v.literal("NOT_MODIFIABLE")
+    )),
+    assigneeMode: v.optional(v.union(
+      v.literal("ALL_STUDENTS"),
+      v.literal("INDIVIDUAL_STUDENTS")
+    )),
     creatorUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -253,12 +274,34 @@ export const saveUserConfig = mutation({
       defaultPartialCredit: v.boolean(),
       defaultCaseSensitive: v.boolean(),
       defaultExactMatch: v.boolean(),
+      theme: v.union(v.literal("light"), v.literal("dark"), v.literal("system")),
+      language: v.string(),
+      timezone: v.string(),
+      emailNotifications: v.boolean(),
+      pushNotifications: v.boolean(),
+      weeklyDigest: v.boolean(),
+      defaultGradingMethod: v.union(
+        v.literal("auto"),
+        v.literal("manual"),
+        v.literal("ai"),
+        v.literal("hybrid")
+      ),
+      aiProvider: v.union(
+        v.literal("gemini"),
+        v.literal("claude"),
+        v.literal("openai")
+      ),
+      showConfidenceScores: v.boolean(),
+      requireReviewThreshold: v.number(),
     }),
     integrationSettings: v.object({
       googleClassroomEnabled: v.boolean(),
       googleFormsEnabled: v.boolean(),
       lastClassroomSync: v.optional(v.number()),
       lastFormsSync: v.optional(v.number()),
+      webhookUrl: v.optional(v.string()),
+      webhookSecret: v.optional(v.string()),
+      webhookEnabled: v.boolean(),
     }),
   },
   handler: async (ctx, args) => {
@@ -274,6 +317,7 @@ export const saveUserConfig = mutation({
         preferences: args.preferences,
         integrationSettings: args.integrationSettings,
         lastActiveTime: Date.now(),
+        updatedTime: Date.now(),
       });
       return { success: true, action: "updated", configId: existing._id };
     } else {
@@ -284,6 +328,7 @@ export const saveUserConfig = mutation({
         integrationSettings: args.integrationSettings,
         lastActiveTime: Date.now(),
         createdTime: Date.now(),
+        updatedTime: Date.now(),
       });
       return { success: true, action: "created", configId };
     }
@@ -545,11 +590,27 @@ export const saveSubmissionData = mutation({
     studentId: v.string(),
     studentEmail: v.optional(v.string()),
     submissionId: v.string(), // Google Classroom submission ID
-    state: v.string(),
+    state: v.union(
+      v.literal("NEW"),
+      v.literal("CREATED"),
+      v.literal("TURNED_IN"),
+      v.literal("RETURNED"),
+      v.literal("RECLAIMED_BY_STUDENT")
+    ),
     responses: v.array(v.object({
       questionId: v.string(),
       questionTitle: v.string(),
-      questionType: v.string(),
+      questionType: v.union(
+        v.literal("MULTIPLE_CHOICE"),
+        v.literal("CHECKBOX"),
+        v.literal("SHORT_ANSWER"),
+        v.literal("PARAGRAPH"),
+        v.literal("SCALE"),
+        v.literal("GRID"),
+        v.literal("DATE"),
+        v.literal("TIME"),
+        v.literal("FILE_UPLOAD")
+      ),
       response: v.union(v.string(), v.array(v.string())),
       textResponse: v.optional(v.string()),
       fileUploadAnswers: v.optional(v.array(v.string())),
